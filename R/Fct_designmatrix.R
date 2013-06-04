@@ -169,7 +169,7 @@ E.design <- function(J.vig, K, l, J.plot=J.vig){
 			
 	knots <- quantile(J.vig, seq(1,K-2,by=1) / (K-1) )
 	
-	for(i in 1:length(J.plot))if((J.plot[i]>max(J.vig)) | (J.plot[i] <min(J.vig))){print(paste(J.plot,"not in range J.vig: (",min(J.vig),"),(",max(J.vig),")"))}
+	for(i in 1:length(J.plot))if((J.plot[i]>max(J.vig)) | (J.plot[i] <min(J.vig))){print(paste(J.plot[i],"not in range J.vig: (",min(J.vig),"),(",max(J.vig),")"))}
 
 	E<-bs(x=J.plot, knots=knots, degree=l, intercept=TRUE,Boundary.knots=range(J.vig)) # ist intercept=TRUE eine gute Wahl?
 		# Update 21.12.11: Vielleicht ist doch FALSE besser wegen Identifizierbarkeit, ich probier es mal...

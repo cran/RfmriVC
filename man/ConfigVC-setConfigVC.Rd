@@ -20,7 +20,8 @@ These functions serve as constructors for \code{ConfigVC} objects, i.e. these sh
 }
 \usage{
 \S4method{setConfigVC}{ConfigVC}(object,tr=2,stimTimes,nStimBF=1,VC,nVCknots=10,
-		degreeVCspline=2,confounder=NULL,freqHPF=128,y,mask=NULL,grandMeanScaling=TRUE)
+		degreeVCspline=2,confounder=NULL,freqHPF=128,y,mask=NULL,
+    grandMeanScaling=TRUE)
 		
 \S4method{setConfigVC.Classical}{ConfigVC}(object)
 
@@ -54,7 +55,9 @@ These functions serve as constructors for \code{ConfigVC} objects, i.e. these sh
 For each HRF basis function, which is requested to be contained in the model, the \code{VCcontrol}-list contains a list with the following default: list(gammaStart=matrix(0,nrow=p,ncol=1),a=0.001,b=0.001).
 If non-default values should be used, the whole \code{VCcontrol} statement must be given, e.g. for a model with canonical HRF and its time derivative (\code{nStimBF=2}):
 
-\code{VCcontrol}=list(list(gammaStart=matrix(gammaLSest1,nrow=p,ncol=1),a=0.05,b=0.001), list(gammaStart=matrix(gammaLSest2,nrow=p,ncol=1),a=0.1,b=0.1))
+\code{VCcontrol}=list(list(gammaStart=matrix(gammaLSest1,nrow=p,ncol=1),a=0.05,b=0.001), 
+
+                      list(gammaStart=matrix(gammaLSest2,nrow=p,ncol=1),a=0.1,b=0.1))
 
 where parameter p is the number of VC coefficients of each HRF (p<-nVCknots+degreeVCspline-1) and gammaLSest1 and gammaLSest2 are for example the estimates from a model with constant stimulus effects.  
 }

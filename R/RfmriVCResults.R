@@ -147,10 +147,29 @@ setMethod(
 				#calculate total design matrix
 				Xtotal<-cbind(object@U,object@X)
 				
+				lambdaVec<-object@methodResults$lambdaHat[voxelIndex3D[1],voxelIndex3D[2],voxelIndex3D[3],,1,1,1]
+				#lambdaVec<-as.matrix(rep(lambdaVec,each=p),ncol=p*object@nStimBF,nrow=1)
+				
+				
 				#Calculate total penalty matrix
 				nCol=dim(Xtotal)[2]
-				unpen<-diag(rep(1,q))
-				pen<-diag(rep(1,object@nStimBF))%x%object@penMat
+				unpen<-diag(rep(0,q))
+				####################
+				#  alt bzw falsch? #
+				####################
+				#pen<-diag(rep(1,object@nStimBF))%x%object@penMat
+				#pen<-pen%*%lambdaVec
+				##Bem: Hiermit kommt keine matrix mehr raus! 
+				##print(dim(pen))
+				##ergibt: p*dim(penMat) x 1 
+				#########
+				#  neu  #
+				#########
+				ifelse(length(lambdaVec)>1,diaglambdaVec<-diag(lambdaVec),diaglambdaVec<-lambdaVec)
+				pen<-diaglambdaVec%x%object@penMat
+				##Bem: Das müsste richtig sein.
+				#print(dim(pen))
+				##ergibt: p*dim(penMat) x p*dim(penMat)
 				penMatTotal<-matrix(0,nrow=nCol,ncol=nCol)
 				penMatTotal[1:q,1:q]<-unpen
 				penMatTotal[(q+1):nCol,(q+1):nCol]<-pen
@@ -165,6 +184,8 @@ setMethod(
 		}
 )
 
+
+
 #############################################################################
 # Function to calculate point and interval estimates of beta_i(VC)
 # for all voxels i=1,...,N -> and save them in a 4D nifti
@@ -176,16 +197,18 @@ setMethod(
 		signature="ResultsVC",
 		function(object,VC.plot=object@VC.plot,which.beta=1){
 			dims<-dim(object@total2maskIndex)
+			if(length(dims)==1)dims<-c(dims,1,1)
+			if(length(dims)==2)dims<-c(dims,1)
 			#Initialize nifti for all voxelwise betaHat-Estimates 
 			betaHatTotal<-nifti.image.new()
-			betaHatTotal$dim<-c(dims[1:3],length(object@VC.plot)) 
+			betaHatTotal$dim<-c(dims[1:3],length(VC.plot)) 
 			nifti.image.alloc.data(betaHatTotal)
 			
 			for(i in 1:dims[1]){
 				for(j in 1:dims[2]){
 					for(k in 1:dims[3]){
 						if(object@total2maskIndex[i,j,k,1,1,1,1]!=0){
-							betaHatTotal[i,j,k,,1,1,1,1]<-as.vector(betaHat(object,voxelIndex3D=c(i,j,k),VC.plot=VC.plot,which.beta=which.beta)[,1])
+							betaHatTotal[i,j,k,,1,1,1]<-as.vector(betaHat(object,voxelIndex3D=c(i,j,k),VC.plot=VC.plot,which.beta=which.beta)[,1])
 						}
 					}
 				}
@@ -194,6 +217,44 @@ setMethod(
 			return(betaHatTotal)
 		}
 )
+
+#############################################################################
+# Function to calculate point and interval estimates of beta_i(VC)
+# for all voxels i=1,...,N -> and save them in a 4D nifti
+#############################################################################
+
+setGeneric("zeroCoverageNifti",function(object,value,...){standardGeneric("zeroCoverageNifti")})
+setMethod(
+		f="zeroCoverageNifti",
+		signature="ResultsVC",
+		function(object,ci.grid=seq(min(object@stimTimes),max(object@stimTimes),length.out=30),which.beta=1,alpha=object@alpha){
+			dims<-dim(object@total2maskIndex)
+			if(length(dims)==1)dims<-c(dims,1,1)
+			if(length(dims)==2)dims<-c(dims,1)
+			#Initialize nifti for all voxelwise betaHat-Estimates 
+			zeroCoverageTotal<-nifti.image.new()
+			zeroCoverageTotal$dim<-c(dims[1:3],length(ci.grid)) 
+			nifti.image.alloc.data(zeroCoverageTotal)
+			
+			l<-0
+			nvoxSel<-sum(object@total2maskIndex[,,,1,1,1,1]!=0)
+			for(i in 1:dims[1]){
+				for(j in 1:dims[2]){
+					for(k in 1:dims[3]){
+						if(object@total2maskIndex[i,j,k,1,1,1,1]!=0){
+						  l<-l+1
+              if(l%%1000==0)cat(paste("Processing",l,"from",nvoxSel,"\n"))
+						  ci<-betaHat(object,voxelIndex3D=c(i,j,k),VC.plot=ci.grid,which.beta=which.beta,alpha=alpha)[,-1]
+							zeroCoverageTotal[i,j,k,,1,1,1]<-as.numeric(!((ci[,1]< 0) & (ci[,2]> 0)))
+						}
+					}
+				}
+			}
+			
+			return(zeroCoverageTotal)
+		}
+)
+
 
 #############################################################################
 # Function to calculate point and interval estimates of hrf_i(VC,t) for a
@@ -357,3 +418,61 @@ setMethod(
 			
 		}
 )
+
+
+
+###########################################################################
+# The function saveResults() saves a results object to disk. 
+#
+# Parameters:
+#	- object:	    a ResultsVC-Object
+#	- path:	      path to folder, where objects should be saved
+#
+# Return: 
+#	---
+###########################################################################
+
+setGeneric("saveResults",function(object,...){standardGeneric("saveResults")})
+setMethod(
+		f="saveResults",
+		signature="ResultsVC",
+		function(object,path){	
+    	# Abspeichern
+    	save(object,file=paste(path,"/resultsObj.Rdata",sep=""))
+
+      #For both Bayesian and classical
+      nifti.set.filenames(object@methodResults$thetaHat,paste(path,"/thetaHat",sep=""))
+      nifti.image.write(object@methodResults$thetaHat)
+      
+      nifti.set.filenames(object@total2maskIndex,paste(path,"/total2maskIndex",sep=""))
+      nifti.image.write(object@total2maskIndex)	
+    	
+    	if(object@method=="classical"){
+        	nifti.set.filenames(object@methodResults$sigma2Hat,paste(path,"/sigma2Hat",sep=""))
+        	nifti.image.write(object@methodResults$sigma2Hat)
+        	
+        	nifti.set.filenames(object@methodResults$lambdaHat,paste(path,"/lambdaHat",sep=""))
+        	nifti.image.write(object@methodResults$lambdaHat)
+    	}      
+} )
+
+###########################################################################
+# The function loadResults() loads objects saved by saveResults()
+#
+# Parameters:
+#	- path:	path to folder, where objects where saved to via saveResults()
+#
+# Return: 
+#	- object of class ResultsVC
+###########################################################################
+loadResults<-function(path){
+	load(paste(path,"/resultsObj.Rdata",sep=""))
+	object@total2maskIndex <- nifti.image.read(file=paste(path,"/total2maskIndex.nii",sep=""))
+	object@methodResults$thetaHat <- nifti.image.read(file=paste(path,"/thetaHat.nii",sep=""))
+	if(object@method=="classical"){
+    	object@methodResults$sigma2Hat <- nifti.image.read(file=paste(path,"/sigma2Hat.nii",sep=""))	
+    	object@methodResults$lambdaHat <- nifti.image.read(file=paste(path,"/lambdaHat.nii",sep=""))
+	}
+	validObject(object)
+	return(object)
+}

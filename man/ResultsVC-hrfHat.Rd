@@ -9,7 +9,8 @@
 Calculation of HRF estimates
 }
 \description{
-Postprocessing routine: Functions to calculate the HRF estimates with corresponding significance/credibility intervals.
+Postprocessing routine: Functions to calculate the HRF estimates with corresponding significance / credibility intervals.
+
 \code{hrfHatPoint()} calculates the hrf estimate for one pair of t and VC value.
 \code{hrfHat()} calculates the hrf estimate for scalar or vector valued t and VC settings.
 }

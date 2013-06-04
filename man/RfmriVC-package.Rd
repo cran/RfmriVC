@@ -39,7 +39,8 @@ confMat<-as.matrix(read.table("covariates.txt"))
 #------- Classical ------------
 # Generate configuration object for classical analysis (= default analysis)
 configObj<-new("ConfigVC")
-configObj<-setConfigVC(configObj,stimTimes=stimTimes,VC=stimTimes,y=y,nStimBF=3,confounder=confMat)
+configObj<-setConfigVC(configObj,stimTimes=stimTimes,VC=stimTimes,y=y,
+                        nStimBF=3,confounder=confMat)
 # Do classical analysis
 resObj<-doFmriVC(configObj)
 
@@ -69,9 +70,11 @@ image(y=VC.grid,x=t.grid,t(matVCt[,,1]),main="Classical estimation")
 
 #------- Bayes ------------
 set.seed(1112)
-# Generate configuration object for bayesian analysis (= non-default analysis -> use extra setter)
+# Generate configuration object for bayesian analysis 
+# (= non-default analysis -> use extra setter)
 configBayObj<-new("ConfigVC")
-configBayObj<-setConfigVC(configBayObj,stimTimes=stimTimes,VC=stimTimes,y=y,nStimBF=3,confounder=confMat)
+configBayObj<-setConfigVC(configBayObj,stimTimes=stimTimes,VC=stimTimes,y=y,
+                          nStimBF=3,confounder=confMat)
 configBayObj<-setConfigVC.Bayes(configBayObj)
 
 #Do analysis

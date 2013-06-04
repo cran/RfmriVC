@@ -1,8 +1,8 @@
 Package: RfmriVC
 Type: Package
 Title: Varying stimulus coefficient fMRI models in R
-Version: 1.0
-Date: 2012-04-25
+Version: 1.0.4
+Date: 2013-06-04
 Author: Ludwig Bothmann, Stefanie Kalus
 Maintainer: Stefanie Kalus <stefanie.kalus@stat.uni-muenchen.de>
 Description: A varying coefficient on the stimulus effect is introduced
@@ -12,6 +12,7 @@ Description: A varying coefficient on the stimulus effect is introduced
         vigilance parameter.
 Depends: methods, splines, mvtnorm, mgcv, Rniftilib
 License: GPL-2
-Packaged: 2012-04-25 14:40:30 UTC; kalus
+Packaged: 2013-06-04 13:39:41 UTC; kalus
+NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2012-04-26 05:08:42
+Date/Publication: 2013-06-04 16:02:30

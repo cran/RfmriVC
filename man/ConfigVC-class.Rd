@@ -52,6 +52,7 @@ To initializes an object use setter functions \code{setConfigVC} and afterwards,
     \item{setConfigVC.Classical}{\code{signature(object = "ConfigVC")}: ... }
     \item{setConfigVC}{\code{signature(object = "ConfigVC")}: ... }
     \item{show}{\code{signature(object = "ConfigVC")}: ... }
+    \item{saveConfig}{\code{signature(object = "ConfigVC")}: ... }
 	 }
 }
 \references{
@@ -63,7 +64,9 @@ Bothmann, L. (2012). Statistische Modellierung von EEG-abhaengigen Stimuluseffek
 Setter functions for assigning slot values (constructors): \cr 
 \code{\link{setConfigVC}}, \code{\link{setConfigVC.Bayes}}, \code{\link{setConfigVC.Classical}}\cr\cr
 Running the estimation procedure: \cr
-\code{\link{doFmriVC}}, \code{\link{doFmriVC.Classical}}, \code{\link{doFmriVC.Bayes}}  
+\code{\link{doFmriVC}}, \code{\link{doFmriVC.Classical}}, \code{\link{doFmriVC.Bayes}}\cr\cr  
+Saving and loading an external representation of a ConfigVC-object: \cr 
+\code{\link{saveConfig}}, \code{\link{loadConfig}}
 }
 
 \keyword{classes}

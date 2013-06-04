@@ -35,6 +35,8 @@
 \alias{hrfHat-method}
 \alias{hrfHatPoint-method}
 \alias{beta.hat.plot}
+\alias{calc.ImagePars}
+
 
 \title{Internal RfmriVC functions}
 \description{

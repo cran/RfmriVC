@@ -17,8 +17,8 @@ These functions serve as constructors for \code{ResultsVC} objects, i.e. these s
 \usage{
 \S4method{setResultsVC}{ResultsVC}(object,configVCobj,method,methodResults)
 
-\S4method{resetResultsVC}{ResultsVC}(object,VC.plot=seq(min(configVCobj@VC),max(configVCobj@VC),length.out=1000),
-	t.plot=seq(0,30,length.out=1000),alpha=0.05)
+\S4method{resetResultsVC}{ResultsVC}(object, VC.plot=seq(min(configVCobj@VC),max(configVCobj@VC),
+	length.out=1000), t.plot=seq(0,30,length.out=1000), alpha=0.05)
 }
 
 \arguments{

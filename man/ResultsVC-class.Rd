@@ -14,6 +14,8 @@
 %%\alias{setResultsVC}
 \alias{show,ResultsVC-method}
 \alias{validResults}
+\alias{zeroCoverageNifti}
+\alias{zeroCoverageNifti,ResultsVC-method}
 
 \title{Class \code{"ResultsVC"}}
 \description{
@@ -46,11 +48,13 @@ If necessary they can be created by calls of the form \code{new("ResultsVC", ...
   \describe{
     \item{betaHat}{\code{signature(object = "ResultsVC")}: ... }
     \item{betaHatNifti}{\code{signature(object = "ResultsVC")}: ... }
+    \item{zeroCoverageNifti}{\code{signature(object = "ResultsVC")}: ... }
     \item{hrfHat}{\code{signature(object = "ResultsVC")}: ... }
     \item{hrfHatPoint}{\code{signature(object = "ResultsVC")}: ... }
     \item{resetResultsVC}{\code{signature(object = "ResultsVC")}: ... }
     \item{setResultsVC}{\code{signature(object = "ResultsVC")}: ... }
     \item{show}{\code{signature(object = "ResultsVC")}: ... }
+    \item{saveResults}{\code{signature(object = "ResultsVC")}: ... }
 	 }
 }
 \references{
@@ -59,7 +63,9 @@ Bothmann, L. (2012). Statistische Modellierung von EEG-abhaengigen Stimuluseffek
 \author{Ludwig Bothmann and Stefanie Kalus}
 
 \seealso{
-	\code{\link{doFmriVC}}, \code{\link{hrfHat}}, \code{\link{betaHat}} \link[=RfmriVC-package]{RfmriVC}
+	\code{\link{doFmriVC}}, \code{\link{hrfHat}}, \code{\link{betaHat}} \link[=RfmriVC-package]{RfmriVC}\cr\cr  
+  Saving and loading an external representation of a ConfigVC-object: \cr 
+  \code{\link{saveResults}}, \code{\link{loadResults}}
 }
 
 \examples{

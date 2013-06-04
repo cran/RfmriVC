@@ -3,12 +3,12 @@
 #library(mgcv)
 #library(mvtnorm)
 
-#source("Z:/analyzes/Rtools/Rpack/RfmriVC-files/Fct_hrf-canonical_norm.r")
-#source("Z:/analyzes/Rtools/Rpack/RfmriVC-files/Fct_designmatrix.r")
-#source("Z:/analyzes/Rtools/Rpack/RfmriVC-files/Fct_bayes.r")
+#source("Z:/analyzes/Rtools/Rpack/RfmriVC-files/Fct_bayes.R")
+#source("Z:/analyzes/Rtools/Rpack/RfmriVC-files/Fct_designmatrix.R")
 #source("Z:/analyzes/Rtools/Rpack/RfmriVC-files/Fct_ests_beta.R")
+#source("Z:/analyzes/Rtools/Rpack/RfmriVC-files/Fct_hrf-canonical_norm.R")
 #source("Z:/analyzes/Rtools/Rpack/RfmriVC-files/Fct_ests_hrf.R")
-#source("Z:/analyzes/Rtools/Rpack/RfmriVC-files/RfmriVCResults.r")
+#source("Z:/analyzes/Rtools/Rpack/RfmriVC-files/RfmriVCResults.R")
 
 setOldClass(c("nifti"))
 
@@ -93,21 +93,28 @@ setMethod(
 			}
 			object@freqHPF<-freqHPF
 			
-			object@y<-y
+			#Convert to nifti with float datatype
+			ynew<-nifti.image.new()
+			ynew$dim<-c(y$dim)   #same dimensions as original dataset
+			nifti.image.alloc.data(ynew)
+			dims<-dim(ynew)
+			
+			object@y<-ynew
+			object@y[,,,,1,1,1]<-y[,,,,1,1,1]
 			
 			#Check if mask is specified, if not: generate a 'threshold' mask (default)
 			if(is.null(mask)){
 				mask<-nifti.image.new()
-				mask$dim<-c(y$dim[1:3],1)   #same x,y,z- dimension as y
+				mask$dim<-c(object@y$dim[1:3],1)   #same x,y,z- dimension as y
 				nifti.image.alloc.data(mask)
 				
-				grandMeanDiv8<-mean(y[,,,,1,1,1])/8
+				grandMeanDiv8<-mean(object@y[,,,,1,1,1])/8
 				
 				#Just select voxels with all time series values > grandMeanDiv8
-				for(i in 1:dim(y)[1]){
-					for(j in 1:dim(y)[2]){
-						for(k in 1:dim(y)[3]){
-							ifelse(sum(y[i,j,k,,1,1,1]<grandMeanDiv8)>0,mask[i,j,k,1,1,1,1]<-0,mask[i,j,k,1,1,1,1]<-1)
+				for(i in 1:dim(object@y)[1]){
+					for(j in 1:dim(object@y)[2]){
+						for(k in 1:dim(object@y)[3]){
+							ifelse(sum(object@y[i,j,k,,1,1,1]<grandMeanDiv8)>0,mask[i,j,k,1,1,1,1]<-0,mask[i,j,k,1,1,1,1]<-1)
 						}
 					}
 				}
@@ -117,15 +124,15 @@ setMethod(
 			# Matrix with mapping from mask index to total index, 
 			#	i.e. information about the i-th selected voxel is contained in row i, which contains the 3D index of the corresponding voxel
 			m2tMat<-matrix(c(0,0,0),nrow=1,ncol=3)
-			for(i in 1:dim(y)[1])for(j in 1:dim(y)[2])for(k in 1:dim(y)[3])if(mask[i,j,k,1,1,1,1]==1)m2tMat<-rbind(m2tMat,matrix(c(i,j,k),nrow=1,ncol=3))
+			for(i in 1:dim(object@y)[1])for(j in 1:dim(object@y)[2])for(k in 1:dim(object@y)[3])if(mask[i,j,k,1,1,1,1]==1)m2tMat<-rbind(m2tMat,matrix(c(i,j,k),nrow=1,ncol=3))
 			object@mask2totalIndex<-matrix(m2tMat[-1,],nrow=sum(mask[,,,1,1,1,1]==1),ncol=3)
 			
 			# Nifti image, which contains at i,j,k the index of the voxel within the set of selected voxels if selected by mask or zero otherwise
 			total2maskIndex<-nifti.image.new()
-			total2maskIndex$dim<-c(y$dim[1:3],1)   #same x,y,z- dimension as y
+			total2maskIndex$dim<-c(object@y$dim[1:3],1)   #same x,y,z- dimension as y
 			nifti.image.alloc.data(total2maskIndex)
 			voxCount<-1
-			for(i in 1:dim(y)[1])for(j in 1:dim(y)[2])for(k in 1:dim(y)[3])if(mask[i,j,k,1,1,1,1]==1){
+			for(i in 1:dim(object@y)[1])for(j in 1:dim(object@y)[2])for(k in 1:dim(object@y)[3])if(mask[i,j,k,1,1,1,1]==1){
 							if(mask[i,j,k,1,1,1,1]==1){
 								total2maskIndex[i,j,k,1,1,1,1]<-voxCount
 								voxCount<-voxCount+1
@@ -141,7 +148,7 @@ setMethod(
 			# Prepare the data #
 			####################	
 			
-			T<-dim(y)[4]
+			T<-dim(object@y)[4]
 			t.grid<-1:T
 			
 
@@ -169,15 +176,21 @@ setMethod(
 
 			# Calculate penalty matrix 
 			#---------------------------
-			object@penMat<-k.pen(object@nVCknots+object@degreeVCspline-1,2)
+			object@penMat<-k.pen(object@nVCknots+object@degreeVCspline-1,1)
 			
 			
 			# Prepare y -> grand mean scaling 
 			#----------------------------------
-			#TODO: Do this before masking!?
-			grandMean<-mean(object@y[,,,,1,1,1])
-			object@y[,,,,1,1,1]<-100*object@y[,,,,1,1,1]/grandMean
-				
+			if(object@grandMeanScaling){
+				#After masking!?
+				yVec<-as.vector(object@y[,,,,1,1,1])
+				maskVec<-as.vector(object@mask[,,,1,1,1,1])
+				grandMean<-mean(yVec[which(maskVec==1)])
+				#Before masking?
+				#grandMean<-mean(object@y[,,,,1,1,1])
+				object@y[,,,,1,1,1]<-100*object@y[,,,,1,1,1]/grandMean
+			}	
+			
 			validObject(object)
 			return(object)
 		}
@@ -506,4 +519,57 @@ setMethod(
 		}
 )
 
+###########################################################################
+# The function saveconfig() saves a config object to disk. 
+#
+# Parameters:
+#	- object:	    a ConfigVC-Object
+#	- path:	      path to folder, where objects should be saved
+#
+# Return: 
+#	---
+###########################################################################
 
+setGeneric("saveConfig",function(object,...){standardGeneric("saveConfig")})
+setMethod(
+		f="saveConfig",
+		signature="ConfigVC",
+		function(object,path){	
+    	# Auslesen
+    	#y <- configObj@y
+    	#mask <- configObj@mask
+    	#total2maskIndex <- configObj@total2maskIndex
+    	
+    	# Abspeichern
+    	save(object,file=paste(path,"/configObj.Rdata",sep=""))
+    	
+    	nifti.set.filenames(object@y,paste(path,"/y",sep=""))
+    	nifti.image.write(object@y)
+    	
+    	nifti.set.filenames(object@mask,paste(path,"/mask",sep=""))
+    	nifti.image.write(object@mask)
+    	
+    	nifti.set.filenames(object@total2maskIndex,paste(path,"/total2maskIndex",sep=""))
+    	nifti.image.write(object@total2maskIndex)		
+} )
+
+###########################################################################
+# The function loadConfig() loads objects saved by saveConfig()
+#
+# Parameters:
+#	- path:	path to folder, where objects where saved to via saveConfig()
+#
+# Return: 
+#	- object of class ConfigVC
+###########################################################################
+loadConfig<-function(path){
+	load(paste(path,"/configObj.Rdata",sep=""))
+	
+	# Einlesen und zuweisen
+	object@y <- nifti.image.read(file=paste(path,"/y.nii",sep=""))
+	object@mask <- nifti.image.read(file=paste(path,"/mask.nii",sep=""))
+	object@total2maskIndex <- nifti.image.read(file=paste(path,"/total2maskIndex.nii",sep=""))
+	
+	validObject(object)
+	return(object)
+}
